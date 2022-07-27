@@ -1,6 +1,5 @@
 import set from 'lodash/set';
 import get from 'lodash/get';
-import update from 'lodash/update';
 import merge from 'lodash/merge';
 import unset from 'lodash/unset';
 
@@ -34,7 +33,7 @@ export class SyncObject {
   }
 
   applyEvent(payload: Event) {
-    const path = this.convertPathToDotted(payload.data)
+    const path = this.convertPathToDotted(payload.data.path)
     const data = payload.data.data
 
     switch (this.toMapUserEventType(payload)) {
@@ -48,21 +47,21 @@ export class SyncObject {
     }
   }
 
-  getObject(path: string): unknown {
-    return path !== ""
-      ? get(this.data, path.replace(/\//g, '.'), this.data) : this.data
+  getObject(slashedPath: string): unknown {
+    const path = this.convertPathToDotted(slashedPath)
+    return path !== "" ? get(this.data, path, this.data) : this.data
   }
 
   // スラッシュ繋ぎで表現されているパスをlodashのset/get/unsetで使えるように
   // ドット繋ぎのパス表現に変換する
-  private convertPathToDotted(eventData: EventData): string {
-    const slashedPath = eventData.path
+  private convertPathToDotted(slashedPath: string): string {
     const trimmedPath = slashedPath.startsWith('/')
       ? slashedPath.slice(1) : slashedPath
     return trimmedPath.replace(/\//g, '.')
   }
 
   // SSEにおける更新の表現からJS SDKにおける更新の表現にマッピングする
+  // 変換した方がパターンマッチがシンプルになって扱いやすい
   private toMapUserEventType(payload: Event): UserEventType {
     switch (payload.event) {
       case "put":
