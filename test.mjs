@@ -159,6 +159,49 @@ test('appending a child', t => {
   });
 });
 
+test('appending a nested child', t => {
+  const syncObject = new SyncObject({
+    event: "put",
+    data: {
+      path: "/",
+      data: {
+        values: {
+          foo: {
+            name: "justine",
+            age: 20,
+          },
+          bar: {
+            name: "michael",
+            age: 25,
+          },
+        },
+      },
+    },
+  })
+
+  syncObject.applyEvent({
+    event: "patch",
+    data: {
+      path: "/values",
+      data: {
+        baz: {
+          name: "alexandor",
+          age: 30,
+        },
+      },
+    }
+  })
+
+  const values = syncObject.getObject("values")
+  t.is(Object.keys(values).length, 3)
+
+  const result = syncObject.getObject("values/baz")
+  t.deepEqual(result, {
+    name: "alexandor",
+    age: 30,
+  });
+});
+
 test('removing a child', t => {
   const syncObject = new SyncObject({
     event: "put",
