@@ -15,7 +15,7 @@ interface Event {
 }
 
 export class SyncObject {
-  private manipulator: SyncObjectManipulator;
+  private manipulator: SyncObjectManipulator<Object | PossbilePrimitive>;
 
   constructor(payload: Event) {
     const data = payload.data.data
@@ -27,7 +27,9 @@ export class SyncObject {
   }
 
   applyEvent(payload: Event) {
-    this.manipulator.applyEvent(payload);
+    const path = payload.data.path.startsWith('/')
+      ? payload.data.path.slice(1) : payload.data.path
+    this.manipulator.applyEvent(payload.event, path, payload.data.data);
   }
 
   getObject(path: string): unknown {
@@ -39,27 +41,24 @@ const isObject = (test: unknown): test is { [key: string]: unknown } => {
   return typeof test === 'object';
 }
 
-interface SyncObjectManipulator {
-  applyEvent(payload: Event): void;
+interface SyncObjectManipulator<T> {
+  // eventTypeにはkeep-aliveとかcancelとかがくるはずだが更新処理ではないため無視の実装をする
+  applyEvent(eventType: EventType, path: string, data: T): void;
   getObject(path: string): unknown;
 }
 
-class ObjectValueManipulator implements SyncObjectManipulator {
+class ObjectValueManipulator implements SyncObjectManipulator<Object> {
   constructor(private data: { [key: string]: unknown }) { }
 
-  applyEvent(payload: Event): void {
-    const path = payload.data.path.startsWith('/')
-      ? payload.data.path.slice(1) : payload.data.path
-    switch (payload.event) {
+  applyEvent(eventType: EventType, path: string, data: Object): void {
+    switch (eventType) {
       case "put": {
-        this.data[path] = payload.data.data
+        this.data[path] = data
       }
       case "patch": {
 
       }
       default:
-        // 残りはkeep-aliveとかcancelとかがくるはずだが
-        // 更新処理ではないため意図的に無視する
         return;
     }
   }
@@ -70,10 +69,23 @@ class ObjectValueManipulator implements SyncObjectManipulator {
 }
 
 type PossbilePrimitive = boolean | number | string;
-class PrimitiveValueManipulator implements SyncObjectManipulator {
+class PrimitiveValueManipulator implements SyncObjectManipulator<PossbilePrimitive> {
   constructor(private data: PossbilePrimitive) { }
 
-  applyEvent(): void { }
+  applyEvent(eventType: EventType, path: string, data: PossbilePrimitive): void {
+    switch (eventType) {
+      case "put": {
+        this.data = data
+      }
+      case "patch": {
+
+      }
+      default:
+        // 残りはkeep-aliveとかcancelとかがくるはずだが
+        // 更新処理ではないため意図的に無視する
+        return;
+    }
+  }
 
   getObject(path: string): unknown {
     return this.data

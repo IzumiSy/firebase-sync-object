@@ -18,7 +18,28 @@ test('noop', t => {
   t.is(result, 20)
 })
 
-test('replacing a field', t => {
+test('replacing a value field', t => {
+  const syncObject = new SyncObject({
+    event: "put",
+    data: {
+      path: "/foo",
+      data: 10,
+    },
+  })
+
+  syncObject.applyEvent({
+    event: "put",
+    data: {
+      path: "/foo",
+      data: 20,
+    }
+  })
+
+  const result = syncObject.getObject("foo")
+  t.is(result, 20);
+});
+
+test('replacing a value field in objects', t => {
   const syncObject = new SyncObject({
     event: "put",
     data: {
@@ -43,7 +64,7 @@ test('replacing a field', t => {
   t.is(result, 15);
 });
 
-test('replacing a field in objects', t => {
+test('replacing an object field in objects', t => {
   const syncObject = new SyncObject({
     event: "put",
     data: {
