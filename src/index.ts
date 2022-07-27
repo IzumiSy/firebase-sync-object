@@ -49,6 +49,9 @@ export class SyncObject {
 
         set(this.data, path, data);
         if (path !== "") {
+          // child_changedの監視はあくまで子孫までに限定されるため
+          // 意図的にfields[0]のみを見るようにしている
+          // (ref: https://stackoverflow.com/a/15164496)
           const fields = path.split('.');
           const childKey = fields[0];
           return {
