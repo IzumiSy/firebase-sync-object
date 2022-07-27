@@ -32,22 +32,34 @@ export class SyncObject {
     this.data = payload.data.data
   }
 
-  applyEvent(payload: Event) {
+  applyEvent(payload: Event): Object {
     const path = this.convertPathToDotted(payload.data.path)
     const data = payload.data.data
 
     switch (this.toMapUserEventType(payload)) {
-      case "value": this.data = data; break;
-      case "child_added": set(this.data, path, data); break;
-      case "child_removed": unset(this.data, path); break;
-      case "child_changed":
-        const current = path !== "" ? get(this.data, path) : this.data
-        this.data = merge(current, data);
-        break;
+      case "value": {
+        this.data = data;
+        return this.getObject(path)
+      }
+      case "child_changed": {
+        set(this.data, path, data);
+        return this.getObject(path)
+      }
+      case "child_removed": {
+        const current = get(this.data, path)
+        unset(this.data, path);
+        return current
+      }
+      case "child_added": {
+        this.data = path !== ""
+          ? set(this.data, path, merge(get(this.data, path), data))
+          : merge(this.data, data);
+        return this.getObject(path)
+      }
     }
   }
 
-  getObject(slashedPath: string): unknown {
+  getObject(slashedPath: string): Object {
     const path = this.convertPathToDotted(slashedPath)
     return path !== "" ? get(this.data, path, this.data) : this.data
   }
@@ -69,13 +81,13 @@ export class SyncObject {
           if (payload.data.path === "") {
             return "value"
           } else {
-            return "child_added"
+            return "child_changed"
           }
         } else {
           return "child_removed"
         }
       case "patch":
-        return "child_changed"
+        return "child_added"
     }
   }
 }
