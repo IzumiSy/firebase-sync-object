@@ -14,8 +14,12 @@ test('getting a field simply', t => {
     },
   })
 
-  const result = syncObject.getObject("bar")
-  t.is(result, 20)
+  const result = syncObject.getObject()
+  t.deepEqual(result, {
+    foo: 10,
+    bar: 20,
+    baz: 30,
+  })
 })
 
 test('changing a value field', t => {
@@ -27,13 +31,14 @@ test('changing a value field', t => {
     },
   })
 
-  syncObject.applyEvent({
+  const applyResult = syncObject.applyEvent({
     event: "put",
     data: {
       path: "",
       data: 20,
     }
   })
+  t.is(applyResult, 20)
 
   const result = syncObject.getObject("foo")
   t.is(result, 20);
@@ -52,19 +57,23 @@ test('changing a value field in objects', t => {
     },
   })
 
-  syncObject.applyEvent({
+  const applyResult = syncObject.applyEvent({
     event: "put",
     data: {
       path: "/foo",
       data: 15,
     }
   })
+  t.deepEqual(applyResult, {
+    foo: 15,
+  })
 
-  const values = syncObject.getObject("")
-  t.is(Object.keys(values).length, 3)
-
-  const result = syncObject.getObject("foo")
-  t.is(result, 15);
+  const result = syncObject.getObject()
+  t.deepEqual(result, {
+    foo: 15,
+    bar: 20,
+    baz: 30,
+  });
 });
 
 test('changing an object field in objects', t => {
@@ -85,36 +94,45 @@ test('changing an object field in objects', t => {
     },
   })
 
-  syncObject.applyEvent({
+  const applyResult1 = syncObject.applyEvent({
     event: "put",
     data: {
       path: "/foo/name",
-      data:  "alexandor",
+      data:  "alexander",
     }
+  })
+  t.deepEqual(applyResult1, {
+    foo: {
+      name: "alexander",
+      age: 20,
+    },
   })
 
 
-  syncObject.applyEvent({
+  const applyResult2 = syncObject.applyEvent({
     event: "put",
     data: {
       path: "/bar/age",
       data: 30,
     }
   })
-
-  const values = syncObject.getObject("")
-  t.is(Object.keys(values).length, 2)
-
-  const result = syncObject.getObject("foo")
-  t.deepEqual(result, {
-    name: "alexandor",
-    age: 20,
+  t.deepEqual(applyResult2, {
+    bar: {
+      name: "michael",
+      age: 30,
+    },
   })
 
-  const result2 = syncObject.getObject("bar")
-  t.deepEqual(result2, {
-    name: "michael",
-    age: 30,
+  const result = syncObject.getObject()
+  t.deepEqual(result, {
+    foo: {
+      name: "alexander",
+      age: 20,
+    },
+    bar: {
+      name: "michael",
+      age: 30,
+    },
   })
 });
 
@@ -136,7 +154,7 @@ test('appending a child', t => {
     },
   })
 
-  syncObject.applyEvent({
+  const applyResult = syncObject.applyEvent({
     event: "patch",
     data: {
       path: "/",
@@ -148,57 +166,27 @@ test('appending a child', t => {
       },
     }
   })
-
-  const values = syncObject.getObject("")
-  t.is(Object.keys(values).length, 3)
-
-  const result = syncObject.getObject("baz")
-  t.deepEqual(result, {
-    name: "alexandor",
-    age: 30,
-  });
-});
-
-test('appending a nested child', t => {
-  const syncObject = new SyncObject({
-    event: "put",
-    data: {
-      path: "/",
-      data: {
-        values: {
-          foo: {
-            name: "justine",
-            age: 20,
-          },
-          bar: {
-            name: "michael",
-            age: 25,
-          },
-        },
-      },
+  t.deepEqual(applyResult, {
+    baz: {
+      name: "alexandor",
+      age: 30,
     },
-  })
+  });
 
-  syncObject.applyEvent({
-    event: "patch",
-    data: {
-      path: "/values",
-      data: {
-        baz: {
-          name: "alexandor",
-          age: 30,
-        },
-      },
-    }
-  })
-
-  const values = syncObject.getObject("values")
-  t.is(Object.keys(values).length, 3)
-
-  const result = syncObject.getObject("values/baz")
+  const result = syncObject.getObject()
   t.deepEqual(result, {
-    name: "alexandor",
-    age: 30,
+    foo: {
+      name: "justine",
+      age: 20,
+    },
+    bar: {
+      name: "michael",
+      age: 25,
+    },
+    baz: {
+      name: "alexandor",
+      age: 30,
+    },
   });
 });
 
@@ -215,41 +203,18 @@ test('removing a child', t => {
     },
   })
 
-  syncObject.applyEvent({
+  const applyResult = syncObject.applyEvent({
     event: "put",
     data: {
       path: "/foo",
       data: null,
     },
   })
+  t.is(applyResult, 10)
 
-  const values = syncObject.getObject("")
-  t.is(Object.keys(values).length, 2)
-})
-
-test('removing a nested child', t => {
-  const syncObject = new SyncObject({
-    event: "put",
-    data: {
-      path: "/",
-      data: {
-        values: {
-          foo: 10,
-          bar: 20,
-          baz: 30,
-        },
-      },
-    },
+  const values = syncObject.getObject()
+  t.deepEqual(values, {
+    bar: 20,
+    baz: 30,
   })
-
-  syncObject.applyEvent({
-    event: "put",
-    data: {
-      path: "/values/foo",
-      data: null,
-    },
-  })
-
-  const values = syncObject.getObject("values")
-  t.is(Object.keys(values).length, 2)
 })

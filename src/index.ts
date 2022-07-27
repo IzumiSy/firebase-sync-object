@@ -39,11 +39,19 @@ export class SyncObject {
     switch (this.toMapUserEventType(payload)) {
       case "value": {
         this.data = data;
-        return this.getObject(path)
+        return data
       }
       case "child_changed": {
         set(this.data, path, data);
-        return this.getObject(path)
+        if (path !== "" && isObject(this.data)) {
+          const fields = path.split('.');
+          const childKey = fields[0];
+          return {
+            [childKey]: this.data[childKey],
+          };
+        } else {
+          return data
+        }
       }
       case "child_removed": {
         const current = get(this.data, path)
@@ -54,14 +62,13 @@ export class SyncObject {
         this.data = path !== ""
           ? set(this.data, path, merge(get(this.data, path), data))
           : merge(this.data, data);
-        return this.getObject(path)
+        return data
       }
     }
   }
 
-  getObject(slashedPath: string): Object {
-    const path = this.convertPathToDotted(slashedPath)
-    return path !== "" ? get(this.data, path, this.data) : this.data
+  getObject(): Object {
+    return this.data
   }
 
   // スラッシュ繋ぎで表現されているパスをlodashのset/get/unsetで使えるように
@@ -90,4 +97,8 @@ export class SyncObject {
         return "child_added"
     }
   }
+}
+
+const isObject = (test: unknown): test is { [key: string]: Object } => {
+  return typeof test === 'object';
 }
