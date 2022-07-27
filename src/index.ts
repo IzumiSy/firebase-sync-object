@@ -1,8 +1,20 @@
-// console.log("hello")
+import set from 'lodash/set';
+import get from 'lodash/get';
+import update from 'lodash/update';
+import merge from 'lodash/merge';
+import unset from 'lodash/unset';
 
-type EventType
+// SSEにおける更新種別の表現
+type SSEEventType
   = "put"
   | "patch"
+
+// JS SDKにおける更新種別の表現
+type UserEventType
+  = "value"
+  | "child_added"
+  | "child_removed"
+  | "child_changed"
 
 interface EventData {
   path: string;
@@ -10,84 +22,61 @@ interface EventData {
 }
 
 interface Event {
-  event: EventType;
+  event: SSEEventType;
   data: EventData;
 }
 
 export class SyncObject {
-  private manipulator: SyncObjectManipulator<Object | PossbilePrimitive>;
+  private data: Object
 
   constructor(payload: Event) {
-    const data = payload.data.data
-    if (isObject(data)) {
-      this.manipulator = new ObjectValueManipulator(data)
-    } else {
-      this.manipulator = new PrimitiveValueManipulator(data as PossbilePrimitive)
-    }
+    this.data = payload.data.data
   }
 
   applyEvent(payload: Event) {
-    const path = payload.data.path.startsWith('/')
-      ? payload.data.path.slice(1) : payload.data.path
-    this.manipulator.applyEvent(payload.event, path, payload.data.data);
-  }
+    const path = this.convertPathToDotted(payload.data)
+    const data = payload.data.data
 
-  getObject(path: string): unknown {
-    return this.manipulator.getObject(path)
-  }
-}
-
-const isObject = (test: unknown): test is { [key: string]: unknown } => {
-  return typeof test === 'object';
-}
-
-interface SyncObjectManipulator<T> {
-  // eventTypeにはkeep-aliveとかcancelとかがくるはずだが更新処理ではないため無視の実装をする
-  applyEvent(eventType: EventType, path: string, data: T): void;
-  getObject(path: string): unknown;
-}
-
-class ObjectValueManipulator implements SyncObjectManipulator<Object> {
-  constructor(private data: { [key: string]: unknown }) { }
-
-  applyEvent(eventType: EventType, path: string, data: Object): void {
-    switch (eventType) {
-      case "put": {
-        this.data[path] = data
-      }
-      case "patch": {
-
-      }
-      default:
-        return;
+    switch (this.toMapUserEventType(payload)) {
+      case "value": this.data = data; break;
+      case "child_added": set(this.data, path, data); break;
+      case "child_removed": unset(this.data, path); break;
+      case "child_changed":
+        const current = path !== "" ? get(this.data, path) : this.data
+        this.data = merge(current, data);
+        break;
     }
   }
 
   getObject(path: string): unknown {
-    return this.data[path];
+    return path !== ""
+      ? get(this.data, path.replace(/\//g, '.'), this.data) : this.data
   }
-}
 
-type PossbilePrimitive = boolean | number | string;
-class PrimitiveValueManipulator implements SyncObjectManipulator<PossbilePrimitive> {
-  constructor(private data: PossbilePrimitive) { }
+  // スラッシュ繋ぎで表現されているパスをlodashのset/get/unsetで使えるように
+  // ドット繋ぎのパス表現に変換する
+  private convertPathToDotted(eventData: EventData): string {
+    const slashedPath = eventData.path
+    const trimmedPath = slashedPath.startsWith('/')
+      ? slashedPath.slice(1) : slashedPath
+    return trimmedPath.replace(/\//g, '.')
+  }
 
-  applyEvent(eventType: EventType, path: string, data: PossbilePrimitive): void {
-    switch (eventType) {
-      case "put": {
-        this.data = data
-      }
-      case "patch": {
-
-      }
-      default:
-        // 残りはkeep-aliveとかcancelとかがくるはずだが
-        // 更新処理ではないため意図的に無視する
-        return;
+  // SSEにおける更新の表現からJS SDKにおける更新の表現にマッピングする
+  private toMapUserEventType(payload: Event): UserEventType {
+    switch (payload.event) {
+      case "put":
+        if (payload.data.data !== null) {
+          if (payload.data.path === "") {
+            return "value"
+          } else {
+            return "child_added"
+          }
+        } else {
+          return "child_removed"
+        }
+      case "patch":
+        return "child_changed"
     }
-  }
-
-  getObject(path: string): unknown {
-    return this.data
   }
 }
