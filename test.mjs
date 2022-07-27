@@ -26,7 +26,7 @@ test('changing a value field', t => {
   const syncObject = new SyncObject({
     event: "put",
     data: {
-      path: "",
+      path: "/",
       data: 10,
     },
   })
@@ -34,13 +34,13 @@ test('changing a value field', t => {
   const applyResult = syncObject.applyEvent({
     event: "put",
     data: {
-      path: "",
+      path: "/",
       data: 20,
     }
   })
   t.is(applyResult, 20)
 
-  const result = syncObject.getObject("foo")
+  const result = syncObject.getObject()
   t.is(result, 20);
 });
 

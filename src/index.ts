@@ -42,8 +42,13 @@ export class SyncObject {
         return data
       }
       case "child_changed": {
+        if (!isObject(this.data)) {
+          this.data = data
+          return data
+        }
+
         set(this.data, path, data);
-        if (path !== "" && isObject(this.data)) {
+        if (path !== "") {
           const fields = path.split('.');
           const childKey = fields[0];
           return {
