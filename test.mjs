@@ -38,7 +38,7 @@ test('changing a value field', t => {
       data: 20,
     }
   })
-  t.is(applyResult, 20)
+  t.is(applyResult.value, 20)
 
   const result = syncObject.getObject()
   t.is(result, 20);
@@ -64,7 +64,7 @@ test('changing a value field in objects', t => {
       data: 15,
     }
   })
-  t.deepEqual(applyResult, {
+  t.deepEqual(applyResult.value, {
     foo: 15,
   })
 
@@ -101,7 +101,7 @@ test('changing an object field in objects', t => {
       data:  "alexander",
     }
   })
-  t.deepEqual(applyResult1, {
+  t.deepEqual(applyResult1.value, {
     foo: {
       name: "alexander",
       age: 20,
@@ -116,7 +116,7 @@ test('changing an object field in objects', t => {
       data: 30,
     }
   })
-  t.deepEqual(applyResult2, {
+  t.deepEqual(applyResult2.value, {
     bar: {
       name: "michael",
       age: 30,
@@ -166,7 +166,7 @@ test('appending a child', t => {
       },
     }
   })
-  t.deepEqual(applyResult, {
+  t.deepEqual(applyResult.value, {
     baz: {
       name: "alexandor",
       age: 30,
@@ -210,7 +210,7 @@ test('removing a child', t => {
       data: null,
     },
   })
-  t.is(applyResult, 10)
+  t.is(applyResult.value, 10)
 
   const values = syncObject.getObject()
   t.deepEqual(values, {

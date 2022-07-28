@@ -25,6 +25,11 @@ interface Event {
   data: EventData;
 }
 
+interface ApplyResult {
+  event: QueryEventType;
+  value: Object;
+}
+
 export class SyncObject {
   private data: Object
 
@@ -32,19 +37,20 @@ export class SyncObject {
     this.data = payload.data.data
   }
 
-  applyEvent(payload: Event): Object {
+  applyEvent(payload: Event): ApplyResult {
     const path = this.convertPathToDotted(payload.data.path)
     const data = payload.data.data
+    const event = this.toQueryEventType(payload)
 
-    switch (this.toMapUserEventType(payload)) {
+    switch (event) {
       case "value": {
         this.data = data;
-        return data
+        return { event, value: data }
       }
       case "child_changed": {
         if (!isObject(this.data)) {
           this.data = data
-          return data
+          return { event, value: data }
         }
 
         set(this.data, path, data);
@@ -54,23 +60,22 @@ export class SyncObject {
           // (ref: https://stackoverflow.com/a/15164496)
           const fields = path.split('.');
           const childKey = fields[0];
-          return {
-            [childKey]: this.data[childKey],
-          };
+          const value = { [childKey]: this.data[childKey] }
+          return { event, value };
         } else {
-          return data
+          return { event, value: data }
         }
       }
       case "child_removed": {
         const current = get(this.data, path)
         unset(this.data, path);
-        return current
+        return { event, value: current }
       }
       case "child_added": {
         this.data = path !== ""
           ? set(this.data, path, merge(get(this.data, path), data))
           : merge(this.data, data);
-        return data
+        return { event, value: data }
       }
     }
   }
@@ -89,7 +94,7 @@ export class SyncObject {
 
   // SSEにおける更新の表現からJS SDKにおける更新の表現にマッピングする
   // 変換した方がパターンマッチがシンプルになって扱いやすい
-  private toMapUserEventType(payload: Event): QueryEventType {
+  private toQueryEventType(payload: Event): QueryEventType {
     switch (payload.event) {
       case "put":
         if (payload.data.data !== null) {
