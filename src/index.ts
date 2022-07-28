@@ -9,7 +9,7 @@ type SSEEventType
   | "patch"
 
 // JS SDKにおける更新種別の表現
-type UserEventType
+type QueryEventType
   = "value"
   | "child_added"
   | "child_removed"
@@ -89,7 +89,7 @@ export class SyncObject {
 
   // SSEにおける更新の表現からJS SDKにおける更新の表現にマッピングする
   // 変換した方がパターンマッチがシンプルになって扱いやすい
-  private toMapUserEventType(payload: Event): UserEventType {
+  private toMapUserEventType(payload: Event): QueryEventType {
     switch (payload.event) {
       case "put":
         if (payload.data.data !== null) {
