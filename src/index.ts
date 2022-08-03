@@ -95,19 +95,23 @@ export class SyncObject {
   // SSEにおける更新の表現からJS SDKにおける更新の表現にマッピングする
   // 変換した方がパターンマッチがシンプルになって扱いやすい
   private toQueryEventType(payload: Event): QueryEventType {
+    const path = this.convertPathToDotted(payload.data.path)
+    const currentValue = get(this.data, path)
+
     switch (payload.event) {
       case "put":
-        if (payload.data.data !== null) {
-          if (payload.data.path === "") {
-            return "value"
+      case "patch":
+        if (payload.data.path !== "") {
+          if (payload.data.data === null) {
+            return "child_removed"
+          } else if (currentValue === undefined) {
+            return "child_added"
           } else {
             return "child_changed"
           }
         } else {
-          return "child_removed"
+          return "value"
         }
-      case "patch":
-        return "child_added"
     }
   }
 }

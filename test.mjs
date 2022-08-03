@@ -155,14 +155,12 @@ test('appending a child', t => {
   })
 
   const applyResult = syncObject.applyEvent({
-    event: "patch",
+    event: "put",
     data: {
-      path: "/",
+      path: "/baz",
       data: {
-        baz: {
-          name: "alexandor",
-          age: 30,
-        },
+        name: "alexandor",
+        age: 30,
       },
     }
   })
