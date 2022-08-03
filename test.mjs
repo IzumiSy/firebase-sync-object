@@ -31,8 +31,7 @@ test('changing a value field', t => {
     },
   })
 
-  const applyResult = syncObject.applyEvent({
-    event: "put",
+  const applyResult = syncObject.applyEvent("put", {
     data: {
       path: "/",
       data: 20,
@@ -57,8 +56,7 @@ test('changing a value field in objects', t => {
     },
   })
 
-  const applyResult = syncObject.applyEvent({
-    event: "put",
+  const applyResult = syncObject.applyEvent("put", {
     data: {
       path: "/foo",
       data: 15,
@@ -94,8 +92,7 @@ test('changing an object field in objects', t => {
     },
   })
 
-  const applyResult1 = syncObject.applyEvent({
-    event: "put",
+  const applyResult1 = syncObject.applyEvent("put", {
     data: {
       path: "/foo/name",
       data:  "alexander",
@@ -109,8 +106,7 @@ test('changing an object field in objects', t => {
   })
 
 
-  const applyResult2 = syncObject.applyEvent({
-    event: "put",
+  const applyResult2 = syncObject.applyEvent("put", {
     data: {
       path: "/bar/age",
       data: 30,
@@ -154,8 +150,7 @@ test('appending a child', t => {
     },
   })
 
-  const applyResult = syncObject.applyEvent({
-    event: "put",
+  const applyResult = syncObject.applyEvent("put", {
     data: {
       path: "/baz",
       data: {
@@ -201,8 +196,7 @@ test('removing a child', t => {
     },
   })
 
-  const applyResult = syncObject.applyEvent({
-    event: "put",
+  const applyResult = syncObject.applyEvent("put", {
     data: {
       path: "/foo",
       data: null,

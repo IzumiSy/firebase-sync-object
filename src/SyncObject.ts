@@ -15,14 +15,9 @@ type QueryEventType
   | "child_removed"
   | "child_changed"
 
-interface EventData {
+export interface EventData {
   path: string;
   data: Object;
-}
-
-interface Event {
-  event: SSEEventType;
-  data: EventData;
 }
 
 interface ApplyResult {
@@ -33,14 +28,14 @@ interface ApplyResult {
 export class SyncObject {
   private data: Object
 
-  constructor(payload: Event) {
+  constructor(payload: MessageEvent<EventData>) {
     this.data = payload.data.data
   }
 
-  applyEvent(payload: Event): ApplyResult {
+  applyEvent(eventType: SSEEventType, payload: MessageEvent<EventData>): ApplyResult {
     const path = this.convertPathToDotted(payload.data.path)
     const data = payload.data.data
-    const event = this.toQueryEventType(payload)
+    const event = this.toQueryEventType(eventType, payload.data)
 
     switch (event) {
       case "value": {
@@ -94,15 +89,15 @@ export class SyncObject {
 
   // SSEにおける更新の表現からJS SDKにおける更新の表現にマッピングする
   // 変換した方がパターンマッチがシンプルになって扱いやすい
-  private toQueryEventType(payload: Event): QueryEventType {
-    const path = this.convertPathToDotted(payload.data.path)
+  private toQueryEventType(eventType: SSEEventType, data: EventData): QueryEventType {
+    const path = this.convertPathToDotted(data.path)
     const currentValue = get(this.data, path)
 
-    switch (payload.event) {
+    switch (eventType) {
       case "put":
       case "patch":
         if (path !== "") {
-          if (payload.data.data === null) {
+          if (data.data === null) {
             return "child_removed"
           } else if (currentValue === undefined) {
             return "child_added"
