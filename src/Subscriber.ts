@@ -1,12 +1,19 @@
 import EventSource from 'eventsource';
 import { SyncObject, EventData } from './SyncObject';
 
+interface EventSourceLike {
+  addEventListener(type: string, listener: (evt: MessageEvent) => void): void;
+}
+
+const createEventSource = (url: string): EventSourceLike =>
+  new EventSource(url);
+
 class Synchronizer {
   private syncObject?: SyncObject;
-  private eventSource: EventSource;
+  private eventSource: EventSourceLike;
 
-  constructor(url: string) {
-    this.eventSource = new EventSource(url);
+  constructor(url: string, connector: (url: string) => EventSourceLike = createEventSource) {
+    this.eventSource = connector(url);
     this.eventSource.addEventListener('open', this.onOpen.bind(this))
     this.eventSource.addEventListener('put', this.onPut.bind(this))
     this.eventSource.addEventListener('patch', this.onPatch.bind(this))
