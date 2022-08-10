@@ -6,6 +6,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "emulator": "firebase emulators:start --project firebase-sync-object",
+    "test:integration": "firebase emulators:exec \"npm run test:seed\" --project firebase-sync-object",
+    "test:seed": "ts-node integration_tests/seeding.ts",
     "test": "ava"
   },
   "keywords": [],
