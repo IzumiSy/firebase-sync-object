@@ -8,7 +8,7 @@
     "emulator": "firebase emulators:start --project firebase-sync-object",
     "test:integration": "firebase emulators:exec \"npm run test:seed\" --project firebase-sync-object",
     "test:seed": "ts-node integration_tests/seeding.ts",
-    "test": "ava"
+    "test": "npm run build && ava"
   },
   "keywords": [],
   "author": "",
@@ -26,5 +26,10 @@
     "eventsource": "^2.0.2",
     "firebase": "^9.9.1",
     "lodash": "^4.17.21"
+  },
+  "ava": {
+    "files": [
+      "tests/**/*"
+    ]
   }
 }
