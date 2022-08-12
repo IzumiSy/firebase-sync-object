@@ -1,19 +1,24 @@
 import EventSource from 'eventsource';
 import { SyncObject, EventData, QueryEventType, SSEEventType } from './SyncObject';
 
-export class Subscriber {
-  private baseURL: string
-  private synchronizers: Map<string, Synchronizer>;
+type Path = string;
 
-  constructor(baseURL: string) {
+export class Subscriber {
+  private synchronizers: Map<Path, Synchronizer>;
+
+  constructor(
+    private baseURL: string,
+    private connector: Connector = createEventSource,
+  ) {
     this.baseURL = baseURL;
+    this.connector = connector
     this.synchronizers = new Map();
   }
 
-  private registerCallback(path: string, type: QueryEventType, cb: Callback) {
+  private registerCallback(path: Path, type: QueryEventType, cb: Callback) {
     const synchronizer = this.synchronizers.get(path)
     if (synchronizer === undefined) {
-      const newSynchronizer = new Synchronizer(this.baseURL);
+      const newSynchronizer = new Synchronizer(this.baseURL, this.connector);
       newSynchronizer.registerCallback(type, cb);
       this.synchronizers.set(path, newSynchronizer);
     } else {
@@ -22,19 +27,19 @@ export class Subscriber {
     }
   }
 
-  onValue(path: string, cb: Callback) {
+  onValue(path: Path, cb: Callback) {
     this.registerCallback(path, 'value', cb);
   }
 
-  onChildAdded(path: string, cb: Callback) {
+  onChildAdded(path: Path, cb: Callback) {
     this.registerCallback(path, 'child_added', cb);
   }
 
-  onChildRemoved(path: string, cb: Callback) {
+  onChildRemoved(path: Path, cb: Callback) {
     this.registerCallback(path, 'child_removed', cb);
   }
 
-  onChildChanged(path: string, cb: Callback) {
+  onChildChanged(path: Path, cb: Callback) {
     this.registerCallback(path, 'child_changed', cb);
   }
 }
@@ -42,6 +47,8 @@ export class Subscriber {
 interface EventSourceLike {
   addEventListener(type: string, listener: (evt: MessageEvent) => void): void;
 }
+
+type Connector = (url: string) => EventSourceLike
 
 const createEventSource = (url: string): EventSourceLike =>
   new EventSource(url);
@@ -51,10 +58,7 @@ class Synchronizer {
   private eventSource: EventSourceLike;
   private callbacks: Callbacks;
 
-  constructor(
-    url: string,
-    connector: (url: string) => EventSourceLike = createEventSource,
-  ) {
+  constructor(url: string, connector: Connector) {
     this.eventSource = connector(url);
     this.eventSource.addEventListener('open', this.onOpen.bind(this))
     this.eventSource.addEventListener('put', e => this.onUpdate('put', e))
