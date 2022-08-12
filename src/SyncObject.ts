@@ -4,12 +4,12 @@ import merge from 'lodash/merge';
 import unset from 'lodash/unset';
 
 // SSEにおける更新種別の表現
-type SSEEventType
+export type SSEEventType
   = "put"
   | "patch"
 
 // JS SDKにおける更新種別の表現
-type QueryEventType
+export type QueryEventType
   = "value"
   | "child_added"
   | "child_removed"
