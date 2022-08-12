@@ -1,5 +1,5 @@
 import test from 'ava';
-import { SyncObject } from './dist/index.js';
+import { SyncObject } from '../dist/SyncObject.js';
 
 test('getting a field simply', t => {
   const syncObject = new SyncObject({

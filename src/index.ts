@@ -1,1 +1,1 @@
-export { SyncObject } from './SyncObject';
+export { Subscriber } from './Subscriber';
