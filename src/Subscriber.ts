@@ -89,7 +89,7 @@ class Synchronizer {
 
 type Callback = (value: Object) => void;
 
-class Callbacks {
+export class Callbacks {
   private callbacks: Map<QueryEventType, Callback[]>;
 
   constructor() {
